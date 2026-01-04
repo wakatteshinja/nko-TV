@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>EPG番組表ビューア</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #eee;
+      font-family: system-ui, sans-serif;
+    }
+
+    header {
+      background: #1b1b1b;
+      padding: 10px 16px;
+      border-bottom: 1px solid #333;
+      font-size: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    header input {
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      padding: 4px 6px;
+    }
+
+    #epg {
+      display: flex;
+      height: calc(100vh - 42px);
+      overflow: auto;
+      position: relative;
+    }
+
+    #timeColumn {
+      width: 80px;
+      background: #161616;
+      border-right: 1px solid #333;
+      flex-shrink: 0;
+    }
+
+    .time {
+      height: 60px;
+      border-bottom: 1px solid #2a2a2a;
+      font-size: 12px;
+      padding: 4px 6px;
+      box-sizing: border-box;
+    }
+
+    #channels {
+      display: flex;
+      position: relative;
+      min-width: 100%;
+    }
+
+    .channel {
+      position: relative;
+      width: 220px;
+      border-left: 1px solid #222;
+      flex-shrink: 0;
+    }
+
+    .channelHeader {
+      position: sticky;
+      top: 0;
+      background: #1b1b1b;
+      padding: 6px;
+      font-size: 13px;
+      border-bottom: 1px solid #333;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .program {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      padding: 8px;
+      box-sizing: border-box;
+      font-size: 13px;
+      cursor: default;
+    }
+
+    .program strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .nowLine {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: red;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: #1e1e1e;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 12px;
+      z-index: 20;
+      pointer-events: none;
+      display: none;
+      max-width: 260px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>EPG番組表ビューア</span>
+  <input type="date" id="datePicker" />
+  <input type="text" id="searchBar" placeholder="番組検索" />
+</header>
+
+<div id="tooltip" class="tooltip"></div>
+
+<div id="epg">
+  <div id="timeColumn"></div>
+  <div id="channels"></div>
+  <div id="nowLine" class="nowLine"></div>
+</div>
+
+<script>
+  const PX_PER_MIN = 1;
+  let currentDate = new Date();
+
+  function formatDate(d) {
+    return d.toISOString().slice(0, 10).replaceAll("-", "");
+  }
+
+  function timeToMin(iso) {
+    const d = new Date(iso);
+    return d.getHours() * 60 + d.getMinutes();
+  }
+
+  function drawTimeColumn() {
+    const col = document.getElementById("timeColumn");
+    col.innerHTML = "";
+    for (let h = 0; h < 24; h++) {
+      const div = document.createElement("div");
+      div.className = "time";
+      div.textContent = String(h).padStart(2, "0") + ":00";
+      col.appendChild(div);
+    }
+  }
+
+  function drawPrograms(programs, channelEl) {
+    const tooltip = document.getElementById("tooltip");
+
+    programs.forEach(p => {
+      const start = timeToMin(p.start);
+      const end = timeToMin(p.end);
+
+      const div = document.createElement("div");
+      div.className = "program";
+      div.style.top = start * PX_PER_MIN + "px";
+      div.style.height = (end - start) * PX_PER_MIN + "px";
+
+      div.innerHTML = `
+        <strong>${p.title}</strong>
+        <div>${p.description || ""}</div>
+        <div style="opacity:.6;font-size:11px;margin-top:4px;">
+          ${p.start.slice(11,16)} - ${p.end.slice(11,16)}
+        </div>
+      `;
+
+      div.addEventListener("mouseenter", e => {
+        tooltip.style.display = "block";
+        tooltip.innerHTML = `<strong>${p.title}</strong><br>${p.description || ""}`;
+      });
+
+      div.addEventListener("mousemove", e => {
+        tooltip.style.left = e.pageX + 12 + "px";
+        tooltip.style.top = e.pageY + 12 + "px";
+      });
+
+      div.addEventListener("mouseleave", () => {
+        tooltip.style.display = "none";
+      });
+
+      channelEl.appendChild(div);
+    });
+  }
+
+  function updateNowLine() {
+    const now = new Date();
+    const min = now.getHours() * 60 + now.getMinutes();
+    document.getElementById("nowLine").style.top = min * PX_PER_MIN + "px";
+  }
+
+  async function init() {
+    drawTimeColumn();
+    updateNowLine();
+
+    document.getElementById("datePicker").value =
+      currentDate.toISOString().slice(0, 10);
+
+    const channelsContainer = document.getElementById("channels");
+    channelsContainer.innerHTML = "";
+
+    const res = await fetch("channels.json");
+    const channelList = await res.json();
+
+    const dateStr = formatDate(currentDate);
+
+    for (const ch of channelList) {
+      const channelEl = document.createElement("div");
+      channelEl.className = "channel";
+
+      const header = document.createElement("div");
+      header.className = "channelHeader";
+      header.textContent = ch.name;
+      channelEl.appendChild(header);
+
+      channelsContainer.appendChild(channelEl);
+
+      try {
+        const prgRes = await fetch(`${ch.id}_${dateStr}.json`);
+        const data = await prgRes.json();
+        const programs = Array.isArray(data) ? data : data.programs;
+        drawPrograms(programs, channelEl);
+
+
+      } catch {}
+    }
+  }
+
+  document.getElementById("datePicker").addEventListener("change", e => {
+    currentDate = new Date(e.target.value);
+    init();
+  });
+
+  document.getElementById("searchBar").addEventListener("input", e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll(".program").forEach(p => {
+      p.style.display = p.textContent.toLowerCase().includes(q) ? "" : "none";
+    });
+  });
+
+  init();
+  setInterval(updateNowLine, 60000);
+</script>
+
+</body>
+</html>

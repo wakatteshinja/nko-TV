@@ -1,0 +1,27 @@
+[
+  { "id": "ch1",  "name": "ch1-nko国営総合" },
+  { "id": "ch2",  "name": "ch2-nko国営教育" },
+  { "id": "ch3",  "name": "ch3-地方チャンネル" },
+  { "id": "ch4",  "name": "ch4-翔陽チャンネル" },
+  { "id": "ch5",  "name": "ch5-nko公式チャンネル" },
+  { "id": "ch6",  "name": "ch6-テレビ自由が丘" },
+  { "id": "ch7",  "name": "ch7-心翔けテレビ" },
+  { "id": "ch8",  "name": "ch8-三神テレビ" },
+  { "id": "ch9",  "name": "ch9-ゲームチャンネル" },
+  { "id": "ch10", "name": "ch10-放送予備校" },
+  { "id": "ch11", "name": "ch11-音楽チャンネル" },
+  { "id": "ch12", "name": "ch12-aiチャンネル" },
+  { "id": "bs1", "name": "BS nko国営総合", "type": "BS" },
+  { "id": "bs2", "name": "BS nko国営教育", "type": "BS" },
+
+  { "id": "bs4", "name": "BS 翔陽チャンネル", "type": "BS" },
+  { "id": "bs5", "name": "BS nko公式", "type": "BS" },
+  { "id": "bs6", "name": "BS テレビ自由が丘", "type": "BS" },
+  { "id": "bs7", "name": "BS 心翔けテレビ", "type": "BS" },
+  { "id": "bs8", "name": "BS 三神テレビ", "type": "BS" },
+
+  { "id": "bs9", "name": "BS ドキュメントnko", "type": "BS" },
+  { "id": "bs10", "name": "BS アーカイブnko", "type": "BS" },
+  { "id": "bs11", "name": "BS ミュージックnko", "type": "BS" },
+  { "id": "bs12", "name": "BS ナイトnko", "type": "BS" }
+]
